@@ -1,10 +1,22 @@
-﻿using CommandLine;
+﻿using Chekkan.AzureDevOpsInsights;
+using CommandLine;
+using Microsoft.Extensions.Logging;
 
-Parser.Default.ParseArguments<Options>(args)
-    .WithParsed<Options>(o =>
+await Parser.Default.ParseArguments<Options>(args)
+    .WithParsedAsync<Options>(async o =>
     {
         Console.WriteLine($"Current Arguments: --organization {o.Organization} " +
         $"--project {o.Project} --test-run-id {o.TestRunId}");
+
+        var loggerFactory = new LoggerFactory().CreateLogger<TestRunCommandHandler>();
+
+        var handler = new TestRunCommandHandler(loggerFactory);
+
+        await handler.Handle(new TestRunCommand{
+            Organization = o.Organization,
+            Project = o.Project,
+            TestRunId = o.TestRunId,
+        });
     });
 
 public class Options
