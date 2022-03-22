@@ -9,18 +9,19 @@ public class TestRunCommandHandler
     public TestRunCommandHandler(ILogger<TestRunCommandHandler> logger)
         => this.logger = logger;
 
-    public async Task Handle(TestRunCommand o)
+    public async Task Handle(TestRunCommand command)
     {
         try
         {
             var httpClient = new HttpClient();
-            httpClient.BaseAddress = new Uri($"https://dev.azure.com/{o.Organization}/{o.Project}/_apis/");
-            var response = await httpClient.GetAsync($"test/Runs/{o.TestRunId}/results?api-version=6.0");
+            httpClient.BaseAddress = new Uri($"https://dev.azure.com/{command.Organization}/{command.Project}/_apis/");
+            var response = await httpClient.GetAsync($"test/Runs/{command.TestRunId}/results?api-version=6.0");
+
             logger.LogInformation($"Got response: {response.StatusCode}");
         }
         catch (System.Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            logger.LogError(ex, ex.Message);
             throw;
         }
     }

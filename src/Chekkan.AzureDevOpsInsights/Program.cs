@@ -1,32 +1,27 @@
 ﻿using Chekkan.AzureDevOpsInsights;
-using CommandLine;
+using Cocona;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-await Parser.Default.ParseArguments<Options>(args)
-    .WithParsedAsync<Options>(async o =>
-    {
-        Console.WriteLine($"Current Arguments: --organization {o.Organization} " +
-        $"--project {o.Project} --test-run-id {o.TestRunId}");
+var builder = Cocona.CoconaApp.CreateBuilder();
+builder.Services.AddTransient<TestRunCommandHandler>();
 
-        var loggerFactory = new LoggerFactory().CreateLogger<TestRunCommandHandler>();
+var app = builder.Build();
 
-        var handler = new TestRunCommandHandler(loggerFactory);
-
-        await handler.Handle(new TestRunCommand{
-            Organization = o.Organization,
-            Project = o.Project,
-            TestRunId = o.TestRunId,
-        });
-    });
-
-public class Options
+await app.RunAsync(async (
+    [Option(Description = "azure devops org name")] string organization,
+    [Option(Description = "azure devops project name")] string project,
+    [Option(Description = "azure devops test run ID")] int testRunId,
+    ILogger<Program> logger,
+    TestRunCommandHandler handler) =>
 {
-    [Option("organization", Required = true, HelpText = "azure devops org name")]
-    public string Organization { get; set; } = string.Empty;
+    logger.LogDebug($"Current Arguments: --organization {organization} " +
+        $"--project {project} --test-run-id {testRunId}");
 
-    [Option("project", Required = true, HelpText = "azure devops project name")]
-    public string Project { get; set; } = string.Empty;
-
-    [Option("test-run-id", Required = true, HelpText = "azure devops test run ID")]
-    public int TestRunId { get; set; }
-}
+    await handler.Handle(new TestRunCommand
+    {
+        Organization = organization,
+        Project = project,
+        TestRunId = testRunId
+    });
+});
